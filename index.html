@@ -12,7 +12,6 @@
             text-align: center;
             padding: 60px 15px;
         }
-        /* YouTube感を消し、一般的なポータルサイト風の青色に */
         h1 {
             color: #2b579a;
             font-size: 24px;
@@ -59,7 +58,7 @@
 </head>
 <body>
 
-    <!-- パスワード画面（一見ただの管理ログイン風） -->
+    <!-- パスワード画面 -->
     <div id="login">
         <h1>🔒 認証システム</h1>
         <input type="password" id="password" placeholder="パスコードを入力" onkeydown="if(event.key === 'Enter') login()">
@@ -67,7 +66,7 @@
         <p id="error"></p>
     </div>
 
-    <!-- ログイン後のサイト（無難なテキスト検索風） -->
+    <!-- ログイン後のサイト -->
     <div id="site">
         <h1>🔎 Webテキスト検索ポータル</h1>
         <input type="text" id="search" placeholder="キーワードを入力" onkeydown="if(event.key === 'Enter') searchWeb()">
@@ -99,13 +98,13 @@
                 return;
             }
 
-            // Googleの「udm=14」という裏パラメータを使い、広告や動画、画像、AIなどを排除した
-            // 最も目立たない「文字だけの検索結果」画面を呼び出します。
-            const url = "https://google.com" + encodeURIComponent(keyword) + "&udm=14";
-            window.location.href = url;
+            // 安全に新しいタブで開く仕組み（エラー対策）
+            const url = "https://www.google.com/search?q=" + encodeURIComponent(keyword) + "&udm=14";
+            window.open(url, '_blank');
         }
     </script>
 </body>
 </html>
+
 
 
