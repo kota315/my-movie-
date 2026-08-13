@@ -1,233 +1,94 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>国立機関・オープンデータアーカイブ</title>
-    <style>
-        body {
-            font-family: "MS PGothic", Arial, sans-serif;
-            background: #f0f4f8;
-            color: #222222;
-            text-align: center;
-            padding: 30px 15px;
-            margin: 0;
-        }
-        header {
-            background: #1a365d;
-            color: white;
-            padding: 15px;
-            font-size: 18px;
-            font-weight: bold;
-            margin-bottom: 20px;
-            text-align: left;
-        }
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            background: white;
-            padding: 20px;
-            border-radius: 4px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        }
-        input {
-            padding: 10px;
-            font-size: 15px;
-            width: 300px;
-            max-width: 70%;
-            border: 1px solid #999;
-            border-radius: 3px;
-        }
-        button {
-            padding: 10px 20px;
-            font-size: 15px;
-            background: #2b6cb0;
-            color: white;
-            border: none;
-            border-radius: 3px;
-            cursor: pointer;
-        }
-        button:hover { background: #2c5282; }
-        #site, #videoArea, #resultsArea { display: none; }
-        #login { margin-top: 100px; }
-        #error { color: red; font-weight: bold; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EDU専用動画プレイヤー</title>
 
-        /* プレイヤーエリアの調整 */
-        .video-box {
-            margin: 20px auto;
-            position: relative;
-            padding-bottom: 56.25%;
-            height: 0;
-            overflow: hidden;
-            max-width: 560px;
-            border: 2px solid #1a365d;
-            background: #000;
-        }
-        .video-box iframe {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-        }
-
-        /* リストのスタイル */
-        .result-list {
-            margin-top: 25px;
-            text-align: left;
-            list-style: none;
-            padding: 0;
-        }
-        .result-item {
-            padding: 12px;
-            border-bottom: 1px dotted #ccc;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-        }
-        .result-item:hover { background: #edf2f7; }
-        .thumb {
-            width: 80px;
-            height: 45px;
-            background: #cbd5e0;
-            margin-right: 15px;
-            flex-shrink: 0;
-            background-size: cover;
-            background-position: center;
-            border: 1px solid #aaa;
-        }
-        .video-title {
-            font-size: 14px;
-            color: #2b6cb0;
-            font-weight: bold;
-            text-decoration: underline;
-        }
-    </style>
+<style>
+body { font-family: sans-serif; background: #1a1a1a; color: #ffffff; text-align: center; padding: 40px 15px; }
+h1 { color: #4caf50; } /* 教育用（EDU）をイメージして緑に変更 */
+.hint { color: #aaaaaa; font-size: 14px; margin-bottom: 20px; }
+input { padding: 14px; font-size: 16px; border: 1px solid #444; border-radius: 8px; margin: 5px; width: 80%; max-width: 400px; background: #2a2a2a; color: #fff; }
+button { padding: 14px 22px; font-size: 16px; border: none; border-radius: 8px; background: #4caf50; color: white; cursor: pointer; font-weight: bold; }
+#site { display: none; }
+#login { margin-top: 100px; }
+.video-container { margin-top: 30px; display: none; justify-content: center; }
+iframe { width: 100%; max-width: 560px; aspect-ratio: 16 / 9; border: none; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+</style>
 </head>
+
 <body>
 
-    <!-- パスワード画面 -->
-    <div id="login" class="container">
-        <h2>🔒 システムログイン</h2>
-        <input type="password" id="password" placeholder="アクセスキーを入力" onkeydown="if(event.key === 'Enter') login()">
-        <button onclick="login()">認証</button>
-        <p id="error"></p>
-    </div>
+<!-- パスワード画面 -->
+<div id="login">
+  <h1>🔒 パスワード</h1>
+  <input type="password" id="password" placeholder="パスワードを入力" onkeydown="if(event.key === 'Enter') login()">
+  <button onclick="login()">入る</button>
+  <p id="error"></p>
+</div>
 
-    <!-- ログイン後の隠しサイト -->
-    <div id="site">
-        <header>🗂️ 統合データベース検索システム (Public Mode)</header>
-        <div class="container">
-            <input type="text" id="searchKeyword" placeholder="検索ワード（例: アニメ、ゲーム、音楽）" onkeydown="if(event.key === 'Enter') searchVideos()">
-            <button onclick="searchVideos()">データ抽出</button>
+<!-- ログイン後のサイト -->
+<div id="site">
+  <h1>🎓 YouTube EDU 再生プレイヤー</h1>
+  <p class="hint">動画のURL、または動画ID（英数字）を貼り付けてください</p>
+  
+  <input type="text" id="videoUrl" placeholder="例: https://youtu.be などを貼り付け" onkeydown="if(event.key === 'Enter') playVideo()">
+  <button onclick="playVideo()">動画を再生</button>
 
-            <!-- プレイヤー出現エリア -->
-            <div id="videoArea">
-                <button onclick="closeVideo()" style="background:#e53e3e; margin-top:10px; padding:5px 10px; font-size:12px;">プレイヤーを閉じる</button>
-                <div class="video-box">
-                    <!-- YouTubeドメインを一切使わないプレイヤー -->
-                    <iframe id="player" src="" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-                </div>
-            </div>
+  <!-- 動画が表示されるエリア -->
+  <div id="videoContainer" class="video-container"></div>
+</div>
 
-            <!-- 検索結果一覧エリア -->
-            <div id="resultsArea">
-                <h3 style="text-align:left; border-left:5px solid #1a365d; padding-left:10px; margin-top:20px;">抽出結果一覧</h3>
-                <ul id="resultsList" class="result-list"></ul>
-            </div>
-        </div>
-    </div>
+<script>
+const PASSWORD = "1234";
 
-    <script>
-        const PASSWORD = "1234";
+function login() {
+  const input = document.getElementById("password").value;
 
-        // YouTubeを迂回する海外の強力なInvidiousプロキシサーバーのリスト
-        // 万が一1つ目が規制されてもいいように複数用意しています
-        const INVIDIOUS_INSTANCES = [
-            "https://nerdvpn.de",
-            "https://yewtu.be",
-            "https://tux.digital",
-            "https://flokinet.to"
-        ];
-        
-        let currentInstance = INVIDIOUS_INSTANCES[0];
+  if (input === PASSWORD) {
+    document.getElementById("login").style.display = "none";
+    document.getElementById("site").style.display = "block";
+    document.getElementById("videoUrl").focus();
+  } else {
+    document.getElementById("error").textContent = "パスワードが違います";
+    document.getElementById("error").style.color = "red";
+  }
+}
 
-        function login() {
-            const input = document.getElementById("password").value;
-            if (input === PASSWORD) {
-                document.getElementById("login").style.display = "none";
-                document.getElementById("site").style.display = "block";
-                document.getElementById("searchKeyword").focus();
-            } else {
-                document.getElementById("error").textContent = "アクセスキーが無効です。";
-            }
-        }
+function playVideo() {
+  const input = document.getElementById("videoUrl").value.trim();
+  if (!input) {
+    alert("URLまたは動画IDを入力してください");
+    return;
+  }
 
-        // プロキシ経由でYouTubeのデータを安全に引っ張ってくる関数
-        function searchVideos() {
-            const keyword = document.getElementById("searchKeyword").value.trim();
-            if (!keyword) return alert("キーワードを入力してください");
+  let videoId = input;
 
-            const listContainer = document.getElementById("resultsList");
-            listContainer.innerHTML = "<li>セキュアサーバーからデータを抽出中...</li>";
-            document.getElementById("resultsArea").style.display = "block";
+  // 貼り付けられたURLから動画ID（11桁の英数字）を自動で抽出する
+  if (input.includes("youtube.com") || input.includes("youtu.be")) {
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+    const match = input.match(regExp);
+    if (match && match[2].length === 11) {
+      videoId = match[2];
+    } else {
+      alert("正しいYouTubeのURLを入力してください");
+      return;
+    }
+  }
 
-            // Invidious APIを利用して検索をかける（YouTubeドメインを一切踏まない）
-            const apiUrl = `${currentInstance}/api/v1/search?q=${encodeURIComponent(keyword)}&type=video`;
+  // 教育用の「youtubeeducation.com」ドメインを適用
+  // 学校ごとのフィルターが設定されているケースに対応できるよう「edufilter」パラメータも付与
+  const container = document.getElementById("videoContainer");
+  container.innerHTML = `
+    <iframe src="https://youtubeeducation.com{videoId}?autoplay=1&edufilter=1" 
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+            allowfullscreen>
+    </iframe>`;
+  
+  container.style.display = "flex";
+}
+</script>
 
-            fetch(apiUrl)
-                .then(res => {
-                    if (!res.ok) throw new Error("サーバー制限");
-                    return res.json();
-                })
-                .then(data => {
-                    listContainer.innerHTML = "";
-
-                    if (!data || data.length === 0) {
-                        listContainer.innerHTML = "<li>該当するデータが見つかりませんでした。</li>";
-                        return;
-                    }
-
-                    // 検索結果を表示
-                    data.forEach(video => {
-                        const title = video.title;
-                        const videoId = video.videoId;
-                        // サムネイルもプロキシ経由にすることで完全規制回避
-                        const thumbUrl = `${currentInstance}/vi/${videoId}/mqdefault.jpg`;
-
-                        const li = document.createElement("li");
-                        li.className = "result-item";
-                        li.onclick = () => playVideo(videoId);
-
-                        li.innerHTML = `
-                            <div class="thumb" style="background-image: url('${thumbUrl}')"></div>
-                            <div class="video-title">${title}</div>
-                        `;
-                        listContainer.appendChild(li);
-                    });
-                })
-                .catch(err => {
-                    // もし1つ目の身代わりサーバーがブロックされたら自動で次のサーバーに切り替えて再試行
-                    console.log("サーバー切り替え中...");
-                    const currentIndex = INVIDIOUS_INSTANCES.indexOf(currentInstance);
-                    if (currentIndex < INVIDIOUS_INSTANCES.length - 1) {
-                        currentInstance = INVIDIOUS_INSTANCES[currentIndex + 1];
-                        searchVideos(); // 再挑戦
-                    } else {
-                        listContainer.innerHTML = "<li>全ての迂回ルートがブロックされています。Wi-Fiを切ってモバイル回線（テザリング等）にする必要があります。</li>";
-                    }
-                });
-        }
-
-        // 規制ドメインを一切使わずに動画をその場で再生
-        function playVideo(id) {
-            // youtube.comではなく、プロキシの埋め込みプレイヤーを使用
-            const embedUrl = `${currentInstance}/embed/${id}?autoplay=1`;
-            document.getElementById("player").src = embedUrl;
-            document.getElementById("videoArea").style.display = "block";
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-
-        function closeVideo() {
-            document.getElementById("player").src = "";
-            document.getElementById("videoArea").style.display = "none";
-        }
-    </script>
 </body>
 </html>
