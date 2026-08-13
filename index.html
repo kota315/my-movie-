@@ -1,63 +1,88 @@
-import requests
-from bs4 import BeautifulSoup
-from urllib.parse import urlparse
+using System;
+using System.IO;
+using System.Reflection;
+using System.Threading;
+using System.Threading.Tasks;
 
-def analyze_website(url):
-    # URLの整形（プロトコルがない場合は補完）
-    if not url.startswith(('http://', 'https://')):
-        url = 'https://' + url
+using Google.Apis.Auth.OAuth2;
+using Google.Apis.Services;
+using Google.Apis.Upload;
+using Google.Apis.Util.Store;
+using Google.Apis.YouTube.v3;
+using Google.Apis.YouTube.v3.Data;
 
-    try:
-        # サイトにリクエストを送信
-        headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}
-        response = requests.get(url, headers=headers, timeout=10)
-        
-        # 結果を格納するリスト
-        technologies = []
-        
-        # 1. HTTPヘッダーの解析（サーバーやバックエンド言語）
-        server = response.headers.get('Server')
-        powered_by = response.headers.get('X-Powered-By')
-        
-        if server:
-            technologies.append(f"Server: {server}")
-        if powered_by:
-            technologies.append(f"Language/Platform: {powered_by}")
+namespace Google.Apis.YouTube.Samples
+{
+  /// <summary>
+  /// YouTube Data API v3 sample: create a playlist.
+  /// Relies on the Google APIs Client Library for .NET, v1.7.0 or higher.
+  /// See https://developers.google.com/api-client-library/dotnet/get_started
+  /// </summary>
+  internal class PlaylistUpdates
+  {
+    [STAThread]
+    static void Main(string[] args)
+    {
+      Console.WriteLine("YouTube Data API: Playlist Updates");
+      Console.WriteLine("==================================");
 
-        # HTMLの解析準備
-        soup = BeautifulSoup(response.text, 'html.parser')
-        html_str = response.text.lower()
+      try
+      {
+        new PlaylistUpdates().Run().Wait();
+      }
+      catch (AggregateException ex)
+      {
+        foreach (var e in ex.InnerExceptions)
+        {
+          Console.WriteLine("Error: " + e.Message);
+        }
+      }
 
-        # 2. CMS（WordPress）の判定
-        if 'wp-content' in html_str or 'wp-includes' in html_str:
-            technologies.append("CMS: WordPress")
+      Console.WriteLine("Press any key to continue...");
+      Console.ReadKey();
+    }
 
-        # 3. フロントエンドフレームワークの判定
-        if '_next/static' in html_str:
-            technologies.append("Framework: Next.js (React)")
-        elif 'nuxt' in html_str:
-            technologies.append("Framework: Nuxt.js (Vue.js)")
+    private async Task Run()
+    {
+      UserCredential credential;
+      using (var stream = new FileStream("client_secrets.json", FileMode.Open, FileAccess.Read))
+      {
+        credential = await GoogleWebAuthorizationBroker.AuthorizeAsync(
+            GoogleClientSecrets.Load(stream).Secrets,
+            // This OAuth 2.0 access scope allows for full read/write access to the
+            // authenticated user's account.
+            new[] { YouTubeService.Scope.Youtube },
+            "user",
+            CancellationToken.None,
+            new FileDataStore(this.GetType().ToString())
+        );
+      }
 
-        # 4. JavaScriptライブラリ（jQuery）の判定
-        if 'jquery' in html_str:
-            technologies.append("JavaScript Library: jQuery")
+      var youtubeService = new YouTubeService(new BaseClientService.Initializer()
+      {
+        HttpClientInitializer = credential,
+        ApplicationName = this.GetType().ToString()
+      });
 
-        # 5. アクセス解析・ツールの判定
-        if 'googletagmanager.com' in html_str or 'google-analytics' in html_str:
-            technologies.append("Analytics: Google Analytics / Tag Manager")
+      // Create a new, private playlist in the authorized user's channel.
+      var newPlaylist = new Playlist();
+      newPlaylist.Snippet = new PlaylistSnippet();
+      newPlaylist.Snippet.Title = "Test Playlist";
+      newPlaylist.Snippet.Description = "A playlist created with the YouTube API v3";
+      newPlaylist.Status = new PlaylistStatus();
+      newPlaylist.Status.PrivacyStatus = "public";
+      newPlaylist = await youtubeService.Playlists.Insert(newPlaylist, "snippet,status").ExecuteAsync();
 
-        # 結果の出力
-        print(f"\n--- 分析結果: {url} ---")
-        if technologies:
-            for tech in technologies:
-                print(f"・ {tech}")
-        else:
-            print("明確なプログラムの特徴が見つかりませんでした。")
+      // Add a video to the newly created playlist.
+      var newPlaylistItem = new PlaylistItem();
+      newPlaylistItem.Snippet = new PlaylistItemSnippet();
+      newPlaylistItem.Snippet.PlaylistId = newPlaylist.Id;
+      newPlaylistItem.Snippet.ResourceId = new ResourceId();
+      newPlaylistItem.Snippet.ResourceId.Kind = "youtube#video";
+      newPlaylistItem.Snippet.ResourceId.VideoId = "GNRMeaz6QRI";
+      newPlaylistItem = await youtubeService.PlaylistItems.Insert(newPlaylistItem, "snippet").ExecuteAsync();
 
-    except requests.exceptions.RequestException as e:
-        print(f"エラー: サイトにアクセスできませんでした。 ({e})")
-
-# テスト実行
-if __name__ == "__main__":
-    target_url = input("分析したいWebサイトのURLを入力してください: ")
-    analyze_website(target_url)
+      Console.WriteLine("Playlist item id {0} was added to playlist id {1}.", newPlaylistItem.Id, newPlaylist.Id);
+    }
+  }
+}
