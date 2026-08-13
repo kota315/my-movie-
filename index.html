@@ -1,121 +1,111 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>YouTube検索</title>
-
-  <style>
-    body {
-      font-family: sans-serif;
-      background: #f5f5f5;
-      text-align: center;
-      padding: 40px 15px;
-    }
-
-    h1 {
-      color: #ff0000;
-    }
-
-    input {
-      padding: 14px;
-      font-size: 18px;
-      border: 1px solid #ccc;
-      border-radius: 8px;
-      margin: 5px;
-    }
-
-    button {
-      padding: 14px 22px;
-      font-size: 18px;
-      border: none;
-      border-radius: 8px;
-      background: #ff0000;
-      color: white;
-      cursor: pointer;
-    }
-
-    #site {
-      display: none;
-    }
-
-    #login {
-      margin-top: 100px;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web Search Portal</title>
+    <style>
+        body {
+            font-family: "Helvetica Neue", Arial, sans-serif;
+            background: #ffffff;
+            color: #333333;
+            text-align: center;
+            padding: 60px 15px;
+        }
+        /* YouTube感を消し、一般的なポータルサイト風の青色に */
+        h1 {
+            color: #2b579a;
+            font-size: 24px;
+            font-weight: normal;
+            margin-bottom: 30px;
+        }
+        input {
+            padding: 12px 16px;
+            font-size: 16px;
+            width: 280px;
+            max-width: 80%;
+            border: 1px solid #ababab;
+            border-radius: 4px;
+            margin: 5px;
+            outline: none;
+        }
+        input:focus {
+            border-color: #2b579a;
+        }
+        button {
+            padding: 12px 24px;
+            font-size: 16px;
+            border: 1px solid #2b579a;
+            border-radius: 4px;
+            background: #2b579a;
+            color: white;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #1e3d6b;
+        }
+        #site {
+            display: none;
+        }
+        #login {
+            margin-top: 100px;
+        }
+        #error {
+            color: #d9534f;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+    </style>
 </head>
-
 <body>
 
-  <!-- パスワード画面 -->
-  <div id="login">
-    <h1>🔒 パスワード</h1>
+    <!-- パスワード画面（一見ただの管理ログイン風） -->
+    <div id="login">
+        <h1>🔒 認証システム</h1>
+        <input type="password" id="password" placeholder="パスコードを入力" onkeydown="if(event.key === 'Enter') login()">
+        <button onclick="login()">送信</button>
+        <p id="error"></p>
+    </div>
 
-    <input
-      type="password"
-      id="password"
-      placeholder="パスワードを入力"
-    >
+    <!-- ログイン後のサイト（無難なテキスト検索風） -->
+    <div id="site">
+        <h1>🔎 Webテキスト検索ポータル</h1>
+        <input type="text" id="search" placeholder="キーワードを入力" onkeydown="if(event.key === 'Enter') searchWeb()">
+        <button onclick="searchWeb()">検索</button>
+    </div>
 
-    <button onclick="login()">入る</button>
+    <script>
+        const PASSWORD = "1234";
 
-    <p id="error"></p>
-  </div>
+        function login() {
+            const input = document.getElementById("password").value;
+            const errorElement = document.getElementById("error");
 
+            if (input === PASSWORD) {
+                document.getElementById("login").style.display = "none";
+                document.getElementById("site").style.display = "block";
+                errorElement.textContent = ""; 
+                document.getElementById("search").focus();
+            } else {
+                errorElement.textContent = "パスコードが正しくありません。";
+            }
+        }
 
-  <!-- ログイン後のサイト -->
-  <div id="site">
+        function searchWeb() {
+            const keyword = document.getElementById("search").value.trim();
 
-    <h1>🔎 YouTube検索</h1>
+            if (!keyword) {
+                alert("検索ワードを入力してください");
+                return;
+            }
 
-    <input
-      type="text"
-      id="search"
-      placeholder="検索したい動画を入力"
-      onkeydown="if(event.key === 'Enter') searchYouTube()"
-    >
-
-    <button onclick="searchYouTube()">検索</button>
-
-  </div>
-
-
-  <script>
-
-    // ここを好きなパスワードに変更
-    const PASSWORD = "1234";
-
-    function login() {
-      const input = document.getElementById("password").value;
-
-      if (input === PASSWORD) {
-        document.getElementById("login").style.display = "none";
-        document.getElementById("site").style.display = "block";
-      } else {
-        document.getElementById("error").textContent =
-          "パスワードが違います";
-        document.getElementById("error").style.color = "red";
-      }
-    }
-
-    function searchYouTube() {
-      const keyword =
-        document.getElementById("search").value.trim();
-
-      if (!keyword) {
-        alert("検索ワードを入力してください");
-        return;
-      }
-
-      const url =
-        "https://www.youtube.com/results?search_query=" +
-        encodeURIComponent(keyword);
-
-      window.location.href = url;
-    }
-
-  </script>
-
+            // Googleの「udm=14」という裏パラメータを使い、広告や動画、画像、AIなどを排除した
+            // 最も目立たない「文字だけの検索結果」画面を呼び出します。
+            const url = "https://google.com" + encodeURIComponent(keyword) + "&udm=14";
+            window.location.href = url;
+        }
+    </script>
 </body>
 </html>
+
 
