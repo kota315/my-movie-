@@ -3,140 +3,230 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Web Data Portal</title>
+    <title>国立機関・オープンデータアーカイブ</title>
     <style>
         body {
-            font-family: sans-serif;
-            background: #ffffff;
-            color: #333333;
+            font-family: "MS PGothic", Arial, sans-serif;
+            background: #f0f4f8;
+            color: #222222;
             text-align: center;
-            padding: 40px 15px;
+            padding: 30px 15px;
+            margin: 0;
         }
-        h1 {
-            color: #2b579a;
-            font-size: 22px;
-            font-weight: normal;
+        header {
+            background: #1a365d;
+            color: white;
+            padding: 15px;
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            text-align: left;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 4px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
         input {
-            padding: 12px;
-            font-size: 16px;
-            width: 280px;
-            max-width: 80%;
-            border: 1px solid #ababab;
-            border-radius: 4px;
-            margin: 5px;
+            padding: 10px;
+            font-size: 15px;
+            width: 300px;
+            max-width: 70%;
+            border: 1px solid #999;
+            border-radius: 3px;
         }
         button {
-            padding: 12px 20px;
-            font-size: 16px;
-            background: #2b579a;
+            padding: 10px 20px;
+            font-size: 15px;
+            background: #2b6cb0;
             color: white;
             border: none;
-            border-radius: 4px;
+            border-radius: 3px;
             cursor: pointer;
         }
-        #site, #videoContainer {
-            display: none;
-        }
-        #login {
-            margin-top: 100px;
-        }
-        #error {
-            color: red;
-        }
-        /* 動画プレイヤーの枠をスッキリ表示 */
+        button:hover { background: #2c5282; }
+        #site, #videoArea, #resultsArea { display: none; }
+        #login { margin-top: 100px; }
+        #error { color: red; font-weight: bold; }
+
+        /* プレイヤーエリアの調整 */
         .video-box {
-            margin-top: 20px;
+            margin: 20px auto;
             position: relative;
-            padding-bottom: 56.25%; /* 16:9 の比率 */
+            padding-bottom: 56.25%;
             height: 0;
             overflow: hidden;
-            max-width: 640px;
-            margin-left: auto;
-            margin-right: auto;
-            border: 1px solid #ccc;
-            border-radius: 8px;
+            max-width: 560px;
+            border: 2px solid #1a365d;
+            background: #000;
         }
         .video-box iframe {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
         }
-        .desc {
-            font-size: 12px;
-            color: #777;
-            margin-bottom: 20px;
+
+        /* リストのスタイル */
+        .result-list {
+            margin-top: 25px;
+            text-align: left;
+            list-style: none;
+            padding: 0;
+        }
+        .result-item {
+            padding: 12px;
+            border-bottom: 1px dotted #ccc;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+        }
+        .result-item:hover { background: #edf2f7; }
+        .thumb {
+            width: 80px;
+            height: 45px;
+            background: #cbd5e0;
+            margin-right: 15px;
+            flex-shrink: 0;
+            background-size: cover;
+            background-position: center;
+            border: 1px solid #aaa;
+        }
+        .video-title {
+            font-size: 14px;
+            color: #2b6cb0;
+            font-weight: bold;
+            text-decoration: underline;
         }
     </style>
 </head>
 <body>
 
     <!-- パスワード画面 -->
-    <div id="login">
-        <h1>🔒 認証システム</h1>
-        <input type="password" id="password" placeholder="パスコードを入力" onkeydown="if(event.key === 'Enter') login()">
-        <button onclick="login()">送信</button>
+    <div id="login" class="container">
+        <h2>🔒 システムログイン</h2>
+        <input type="password" id="password" placeholder="アクセスキーを入力" onkeydown="if(event.key === 'Enter') login()">
+        <button onclick="login()">認証</button>
         <p id="error"></p>
     </div>
 
-    <!-- ログイン後のサイト -->
+    <!-- ログイン後の隠しサイト -->
     <div id="site">
-        <h1>🔎 データ検索ポータル</h1>
-        <p class="desc">見たい動画のURL（例: https://youtu.be）または「動画ID」を入力してください。</p>
-        <input type="text" id="videoUrl" placeholder="YouTubeのURLを入力" onkeydown="if(event.key === 'Enter') loadVideo()">
-        <button onclick="loadVideo()">動画を読み込む</button>
-        
-        <!-- 動画が表示されるエリア -->
-        <div id="videoContainer" class="video-box">
-            <iframe id="player" src="" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+        <header>🗂️ 統合データベース検索システム (Public Mode)</header>
+        <div class="container">
+            <input type="text" id="searchKeyword" placeholder="検索ワード（例: アニメ、ゲーム、音楽）" onkeydown="if(event.key === 'Enter') searchVideos()">
+            <button onclick="searchVideos()">データ抽出</button>
+
+            <!-- プレイヤー出現エリア -->
+            <div id="videoArea">
+                <button onclick="closeVideo()" style="background:#e53e3e; margin-top:10px; padding:5px 10px; font-size:12px;">プレイヤーを閉じる</button>
+                <div class="video-box">
+                    <!-- YouTubeドメインを一切使わないプレイヤー -->
+                    <iframe id="player" src="" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                </div>
+            </div>
+
+            <!-- 検索結果一覧エリア -->
+            <div id="resultsArea">
+                <h3 style="text-align:left; border-left:5px solid #1a365d; padding-left:10px; margin-top:20px;">抽出結果一覧</h3>
+                <ul id="resultsList" class="result-list"></ul>
+            </div>
         </div>
     </div>
 
     <script>
         const PASSWORD = "1234";
 
+        // YouTubeを迂回する海外の強力なInvidiousプロキシサーバーのリスト
+        // 万が一1つ目が規制されてもいいように複数用意しています
+        const INVIDIOUS_INSTANCES = [
+            "https://nerdvpn.de",
+            "https://yewtu.be",
+            "https://tux.digital",
+            "https://flokinet.to"
+        ];
+        
+        let currentInstance = INVIDIOUS_INSTANCES[0];
+
         function login() {
             const input = document.getElementById("password").value;
             if (input === PASSWORD) {
                 document.getElementById("login").style.display = "none";
                 document.getElementById("site").style.display = "block";
-                document.getElementById("videoUrl").focus();
+                document.getElementById("searchKeyword").focus();
             } else {
-                document.getElementById("error").textContent = "パスコードが正しくありません。";
+                document.getElementById("error").textContent = "アクセスキーが無効です。";
             }
         }
 
-        function loadVideo() {
-            const input = document.getElementById("videoUrl").value.trim();
-            if (!input) {
-                alert("URLまたは動画IDを入力してください");
-                return;
-            }
+        // プロキシ経由でYouTubeのデータを安全に引っ張ってくる関数
+        function searchVideos() {
+            const keyword = document.getElementById("searchKeyword").value.trim();
+            if (!keyword) return alert("キーワードを入力してください");
 
-            let videoId = "";
+            const listContainer = document.getElementById("resultsList");
+            listContainer.innerHTML = "<li>セキュアサーバーからデータを抽出中...</li>";
+            document.getElementById("resultsArea").style.display = "block";
 
-            // 各種YouTubeのURL形式から「動画ID」だけを自動で抜き出す処理
-            if (input.includes("v=")) {
-                videoId = input.split("v=")[1].split("&")[0];
-            } else if (input.includes("youtu.be/")) {
-                videoId = input.split("youtu.be/")[1].split("?")[0];
-            } else if (input.includes("embed/")) {
-                videoId = input.split("embed/")[1].split("?")[0];
-            } else {
-                // URLではなく直接ID（11文字の英数字）を入れられた場合
-                videoId = input;
-            }
+            // Invidious APIを利用して検索をかける（YouTubeドメインを一切踏まない）
+            const apiUrl = `${currentInstance}/api/v1/search?q=${encodeURIComponent(keyword)}&type=video`;
 
-            if (videoId) {
-                // 規制を回避しやすい特殊なドメイン（youtube-nocookie.com）を使って埋め込み再生
-                const embedUrl = "https://youtube-nocookie.com" + videoId;
-                document.getElementById("player").src = embedUrl;
-                document.getElementById("videoContainer").style.display = "block";
-            } else {
-                alert("正しいURLを入力してください。");
-            }
+            fetch(apiUrl)
+                .then(res => {
+                    if (!res.ok) throw new Error("サーバー制限");
+                    return res.json();
+                })
+                .then(data => {
+                    listContainer.innerHTML = "";
+
+                    if (!data || data.length === 0) {
+                        listContainer.innerHTML = "<li>該当するデータが見つかりませんでした。</li>";
+                        return;
+                    }
+
+                    // 検索結果を表示
+                    data.forEach(video => {
+                        const title = video.title;
+                        const videoId = video.videoId;
+                        // サムネイルもプロキシ経由にすることで完全規制回避
+                        const thumbUrl = `${currentInstance}/vi/${videoId}/mqdefault.jpg`;
+
+                        const li = document.createElement("li");
+                        li.className = "result-item";
+                        li.onclick = () => playVideo(videoId);
+
+                        li.innerHTML = `
+                            <div class="thumb" style="background-image: url('${thumbUrl}')"></div>
+                            <div class="video-title">${title}</div>
+                        `;
+                        listContainer.appendChild(li);
+                    });
+                })
+                .catch(err => {
+                    // もし1つ目の身代わりサーバーがブロックされたら自動で次のサーバーに切り替えて再試行
+                    console.log("サーバー切り替え中...");
+                    const currentIndex = INVIDIOUS_INSTANCES.indexOf(currentInstance);
+                    if (currentIndex < INVIDIOUS_INSTANCES.length - 1) {
+                        currentInstance = INVIDIOUS_INSTANCES[currentIndex + 1];
+                        searchVideos(); // 再挑戦
+                    } else {
+                        listContainer.innerHTML = "<li>全ての迂回ルートがブロックされています。Wi-Fiを切ってモバイル回線（テザリング等）にする必要があります。</li>";
+                    }
+                });
+        }
+
+        // 規制ドメインを一切使わずに動画をその場で再生
+        function playVideo(id) {
+            // youtube.comではなく、プロキシの埋め込みプレイヤーを使用
+            const embedUrl = `${currentInstance}/embed/${id}?autoplay=1`;
+            document.getElementById("player").src = embedUrl;
+            document.getElementById("videoArea").style.display = "block";
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function closeVideo() {
+            document.getElementById("player").src = "";
+            document.getElementById("videoArea").style.display = "none";
         }
     </script>
 </body>
