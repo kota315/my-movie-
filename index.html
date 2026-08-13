@@ -1,22 +1,110 @@
-export const ITAG_PRIORITY = ['18', '22', '59', '78'];
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+    <title>helium</title>
+    <link rel="icon" href="data:,">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600&family=Outfit:wght@300;400;500&family=Noto+Sans+JP:wght@300;400;500&display=swap">
+    <link rel="stylesheet" href="styles/base.css">
+    <link rel="stylesheet" href="styles/header.css">
+    <link rel="stylesheet" href="styles/home.css">
+    <link rel="stylesheet" href="styles/search.css">
+    <link rel="stylesheet" href="styles/watch.css">
+    <link rel="stylesheet" href="styles/drawer.css">
+    <link rel="stylesheet" href="styles/modal.css">
+    <link rel="stylesheet" href="styles/channel.css">
+    <link rel="stylesheet" href="styles/responsive.css">
+</head>
+<body>
+<div id="helium-app" data-mode="home">
 
-export const PAGE_SIZE = 24;
-export const SEARCH_PAGE_SIZE = 20;
-export const REC_INITIAL_BATCH = 25;
+    <header class="he-header">
+        <div class="he-header__left">
+            <button class="he-header-logo" id="logo-btn" aria-label="トップに戻る">
+                <div class="helium-ico helium-ico--sm"></div>
+                <span class="he-header-logo-text">helium</span>
+            </button>
+        </div>
+        <div class="he-header__center">
+            <div class="he-search">
+                <div class="he-search__field">
+                    <input type="text" id="v_url" class="he-search__input"
+                           placeholder="YouTube URL または検索ワード"
+                           spellcheck="false" autocomplete="off">
+                </div>
+                <button id="v_exec" class="he-search__btn" aria-label="検索">
+                    <svg viewBox="0 0 24 24" class="he-search__icon" aria-hidden="true">
+                        <path d="M20.87 20.17l-5.59-5.59C16.35 13.35 17 11.75 17 10c0-3.87-3.13-7-7-7s-7 3.13-7 7 3.13 7 7 7c1.75 0 3.35-.65 4.58-1.71l5.59 5.59.7-.71zM10 16c-3.31 0-6-2.69-6-6s2.69-6 6-6 6 2.69 6 6-2.69 6-6 6z"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <div class="he-header__right">
+            <button class="he-hamburger" id="menu-btn" aria-label="メニュー" aria-expanded="false">
+                <span></span><span></span><span></span>
+            </button>
+        </div>
+    </header>
 
-export const MAX_DIRECT_RETRIES = 6;
+    <main id="helium-main">
+        <div id="helium-res"></div>
+    </main>
+</div>
 
-export const HEALTH_INTERVAL_MS = 30 * 60 * 1000;
-export const HEALTH_STORAGE_KEY = 'helium.health.v2';
-export const SETTINGS_STORAGE_KEY = 'helium.settings.v2';
-export const HEALTH_PROBE_TIMEOUT_MS = 3500;
-export const HEALTH_STALE_MS = 45 * 60 * 1000;
+<div id="he-drawer" class="he-drawer" inert role="dialog" aria-modal="true" aria-labelledby="drawer-title">
+    <div class="he-drawer__overlay" id="drawer-overlay"></div>
+    <aside class="he-drawer__panel">
+        <div class="he-drawer__head">
+            <h2 id="drawer-title" class="he-drawer__title">設定</h2>
+            <button class="he-drawer__close" id="drawer-close" aria-label="閉じる">&times;</button>
+        </div>
+        <div class="he-drawer__body">
+            <div class="he-field">
+                <label class="he-field__label" for="opt-player-mode">再生方式</label>
+                <select id="opt-player-mode" class="he-select">
+                    <option value="direct">直接再生</option>
+                    <option value="embed">公式埋め込み</option>
+                </select>
+            </div>
+            <div class="he-field">
+                <label class="he-field__label" for="opt-open-mode">動画クリック</label>
+                <select id="opt-open-mode" class="he-select">
+                    <option value="page">ページで開く</option>
+                    <option value="modal">モーダル</option>
+                </select>
+            </div>
+            <div class="he-field">
+                <label class="he-field__label" for="opt-download-source">ダウンロード元</label>
+                <select id="opt-download-source" class="he-select">
+                    <option value="proxy">インスタンス経由</option>
+                    <option value="direct">googlevideo 直リンク</option>
+                </select>
+            </div>
+            <div class="he-field">
+                <label class="he-field__label" for="opt-region">地域</label>
+                <select id="opt-region" class="he-select">
+                    <option value="JP">日本</option>
+                    <option value="US">アメリカ</option>
+                </select>
+            </div>
+        </div>
+    </aside>
+</div>
 
-export const RACE_FIRST_TIMEOUT_MS = 6000;
-export const RACE_TOTAL_TIMEOUT_MS = 12000;
+<div id="he-modal" class="he-modal" inert role="dialog" aria-modal="true" aria-labelledby="modal-title-text">
+    <div class="he-modal-overlay" id="modal-overlay"></div>
+    <div class="he-modal-card">
+        <button class="he-modal-close" id="modal-close" aria-label="閉じる">&times;</button>
+        <img id="modal-thumb" src="" alt="" class="he-modal-thumb">
+        <p id="modal-title-text" class="he-modal-title"></p>
+        <div id="modal-action" class="he-modal-action"></div>
+    </div>
+</div>
 
-export const PARALLEL_LIMIT = 6;
-
-export const HOME_CACHE_TTL_MS = 5 * 60 * 1000;
-
-export const INSTANCE_COOLDOWN_MS = 5 * 60 * 1000;
+<script type="module" src="scripts/main.js"></script>
+</body>
+</html>
