@@ -1,101 +1,22 @@
-<!DOCTYPE html>
-<html lang="ja">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ネットワークプレイヤー</title>
+export const ITAG_PRIORITY = ['18', '22', '59', '78'];
 
-<style>
-body { font-family: sans-serif; background: #141414; color: #ffffff; text-align: center; padding: 40px 15px; }
-h1 { color: #ff9900; } /* 警告を避けるマイルドなオレンジに変更 */
-.hint { color: #aaaaaa; font-size: 13px; margin-bottom: 25px; line-height: 1.6; }
-input { padding: 14px; font-size: 16px; border: 1px solid #333; border-radius: 8px; margin: 5px; width: 85%; max-width: 420px; background: #222; color: #fff; text-align: center; }
-button { padding: 14px 24px; font-size: 16px; border: none; border-radius: 8px; background: #ff9900; color: white; cursor: pointer; font-weight: bold; margin-top: 10px; }
-#site { display: none; }
-#login { margin-top: 100px; }
-.video-container { margin-top: 30px; display: none; justify-content: center; }
-iframe { width: 100%; max-width: 560px; aspect-ratio: 16 / 9; border: none; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.7); }
-</style>
-</head>
+export const PAGE_SIZE = 24;
+export const SEARCH_PAGE_SIZE = 20;
+export const REC_INITIAL_BATCH = 25;
 
-<body>
+export const MAX_DIRECT_RETRIES = 6;
 
-<!-- パスワード画面 -->
-<div id="login">
-  <h1>🔒 パスワード</h1>
-  <input type="password" id="password" placeholder="パスワードを入力" onkeydown="if(event.key === 'Enter') login()">
-  <button onclick="login()">入る</button>
-  <p id="error"></p>
-</div>
+export const HEALTH_INTERVAL_MS = 30 * 60 * 1000;
+export const HEALTH_STORAGE_KEY = 'helium.health.v2';
+export const SETTINGS_STORAGE_KEY = 'helium.settings.v2';
+export const HEALTH_PROBE_TIMEOUT_MS = 3500;
+export const HEALTH_STALE_MS = 45 * 60 * 1000;
 
-<!-- ログイン後のサイト -->
-<div id="site">
-  <h1>🎬 特殊接続プレイヤー</h1>
-  <p class="hint">
-    動画のURL、または11桁の動画IDを貼り付けてください。<br>
-    ※ISGC環境下での通信通過を試みるため、裏側の接続方式を切り替えています。
-  </p>
-  
-  <input type="text" id="videoUrl" placeholder="動画のURL または IDを貼り付け" onkeydown="if(event.key === 'Enter') playVideo()">
-  <br>
-  <button onclick="playVideo()">動画を読み込む</button>
+export const RACE_FIRST_TIMEOUT_MS = 6000;
+export const RACE_TOTAL_TIMEOUT_MS = 12000;
 
-  <!-- 動画が表示されるエリア -->
-  <div id="videoContainer" class="video-container"></div>
-</div>
+export const PARALLEL_LIMIT = 6;
 
-<script>
-const PASSWORD = "1234";
+export const HOME_CACHE_TTL_MS = 5 * 60 * 1000;
 
-function login() {
-  const input = document.getElementById("password").value;
-
-  if (input === PASSWORD) {
-    document.getElementById("login").style.display = "none";
-    document.getElementById("site").style.display = "block";
-    document.getElementById("videoUrl").focus();
-  } else {
-    document.getElementById("error").textContent = "パスワードが違います";
-    document.getElementById("error").style.color = "red";
-  }
-}
-
-function playVideo() {
-  const input = document.getElementById("videoUrl").value.trim();
-  if (!input) {
-    alert("URLまたは動画IDを入力してください");
-    return;
-  }
-
-  let videoId = input;
-
-  // URLから11桁の英数字（動画ID）を抜き出す
-  if (input.includes("youtube.com") || input.includes("youtu.be")) {
-    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
-    const match = input.match(regExp);
-    // 動画IDは通常11桁
-    if (match && match[2].length === 11) {
-      videoId = match[2];
-    } else {
-      alert("URLから動画IDを読み取れませんでした。手動で11桁のIDを入力してみてください。");
-      return;
-    }
-  }
-
-  const container = document.getElementById("videoContainer");
-  
-  // ISGCの「youtube.com」個別ブロックを回避するため、
-  // 親元であるGoogleのインフラドメイン「://youtube-nocookie.com」を使用
-  // さらに、制限モードを強制適用させない特殊パラメータ群を追加
-  container.innerHTML = `
-    <iframe src="https://://youtube-nocookie.com/embed/${videoId}?rel=0&modestbranding=1&iv_load_policy=3&autoplay=1" 
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-            allowfullscreen>
-    </iframe>`;
-  
-  container.style.display = "flex";
-}
-</script>
-
-</body>
-</html>
+export const INSTANCE_COOLDOWN_MS = 5 * 60 * 1000;
