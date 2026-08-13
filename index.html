@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Player</title>
+    <style>
+        body { font-family: sans-serif; text-align: center; background: #121212; color: white; padding: 20px; }
+        input { padding: 12px; width: 80%; max-width: 500px; border-radius: 8px; border: none; font-size: 16px; }
+        button { padding: 12px 24px; border-radius: 8px; border: none; background: #ff0000; color: white; cursor: pointer; font-weight: bold; font-size: 16px; margin-top: 10px; }
+        .container { margin-top: 20px; position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: 8px; }
+        .container iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; }
+    </style>
+</head>
+<body>
+    <h2>Private Video Player</h2>
+    <input type="text" id="url" placeholder="YouTubeのURLをペースト">
+    <br>
+    <button onclick="play()">再生する</button>
+    <div class="container" id="player"></div>
+    <script>
+        function play() {
+            let src = document.getElementById('url').value;
+            let id = '';
+            if (src.includes('v=')) { id = src.split('v=')[1].split('&')[0]; }
+            else if (src.includes('youtu.be/')) { id = src.split('youtu.be/')[1].split('?')[0]; }
+            else { alert('URLが正しくありません'); return; }
+            document.getElementById('player').innerHTML = `<iframe src="https://youtube.com{id}" allowfullscreen></iframe>`;
+        }
+    </script>
+</body>
+</html>
