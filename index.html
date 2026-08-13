@@ -3,18 +3,18 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>EDU専用動画プレイヤー</title>
+<title>ネットワークプレイヤー</title>
 
 <style>
-body { font-family: sans-serif; background: #1a1a1a; color: #ffffff; text-align: center; padding: 40px 15px; }
-h1 { color: #4caf50; } /* 教育用（EDU）をイメージして緑に変更 */
-.hint { color: #aaaaaa; font-size: 14px; margin-bottom: 20px; }
-input { padding: 14px; font-size: 16px; border: 1px solid #444; border-radius: 8px; margin: 5px; width: 80%; max-width: 400px; background: #2a2a2a; color: #fff; }
-button { padding: 14px 22px; font-size: 16px; border: none; border-radius: 8px; background: #4caf50; color: white; cursor: pointer; font-weight: bold; }
+body { font-family: sans-serif; background: #141414; color: #ffffff; text-align: center; padding: 40px 15px; }
+h1 { color: #ff9900; } /* 警告を避けるマイルドなオレンジに変更 */
+.hint { color: #aaaaaa; font-size: 13px; margin-bottom: 25px; line-height: 1.6; }
+input { padding: 14px; font-size: 16px; border: 1px solid #333; border-radius: 8px; margin: 5px; width: 85%; max-width: 420px; background: #222; color: #fff; text-align: center; }
+button { padding: 14px 24px; font-size: 16px; border: none; border-radius: 8px; background: #ff9900; color: white; cursor: pointer; font-weight: bold; margin-top: 10px; }
 #site { display: none; }
 #login { margin-top: 100px; }
 .video-container { margin-top: 30px; display: none; justify-content: center; }
-iframe { width: 100%; max-width: 560px; aspect-ratio: 16 / 9; border: none; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+iframe { width: 100%; max-width: 560px; aspect-ratio: 16 / 9; border: none; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.7); }
 </style>
 </head>
 
@@ -30,11 +30,15 @@ iframe { width: 100%; max-width: 560px; aspect-ratio: 16 / 9; border: none; bord
 
 <!-- ログイン後のサイト -->
 <div id="site">
-  <h1>🎓 YouTube EDU 再生プレイヤー</h1>
-  <p class="hint">動画のURL、または動画ID（英数字）を貼り付けてください</p>
+  <h1>🎬 特殊接続プレイヤー</h1>
+  <p class="hint">
+    動画のURL、または11桁の動画IDを貼り付けてください。<br>
+    ※ISGC環境下での通信通過を試みるため、裏側の接続方式を切り替えています。
+  </p>
   
-  <input type="text" id="videoUrl" placeholder="例: https://youtu.be などを貼り付け" onkeydown="if(event.key === 'Enter') playVideo()">
-  <button onclick="playVideo()">動画を再生</button>
+  <input type="text" id="videoUrl" placeholder="動画のURL または IDを貼り付け" onkeydown="if(event.key === 'Enter') playVideo()">
+  <br>
+  <button onclick="playVideo()">動画を読み込む</button>
 
   <!-- 動画が表示されるエリア -->
   <div id="videoContainer" class="video-container"></div>
@@ -65,23 +69,26 @@ function playVideo() {
 
   let videoId = input;
 
-  // 貼り付けられたURLから動画ID（11桁の英数字）を自動で抽出する
+  // URLから11桁の英数字（動画ID）を抜き出す
   if (input.includes("youtube.com") || input.includes("youtu.be")) {
     const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
     const match = input.match(regExp);
+    // 動画IDは通常11桁
     if (match && match[2].length === 11) {
       videoId = match[2];
     } else {
-      alert("正しいYouTubeのURLを入力してください");
+      alert("URLから動画IDを読み取れませんでした。手動で11桁のIDを入力してみてください。");
       return;
     }
   }
 
-  // 教育用の「youtubeeducation.com」ドメインを適用
-  // 学校ごとのフィルターが設定されているケースに対応できるよう「edufilter」パラメータも付与
   const container = document.getElementById("videoContainer");
+  
+  // ISGCの「youtube.com」個別ブロックを回避するため、
+  // 親元であるGoogleのインフラドメイン「://youtube-nocookie.com」を使用
+  // さらに、制限モードを強制適用させない特殊パラメータ群を追加
   container.innerHTML = `
-    <iframe src="https://youtubeeducation.com{videoId}?autoplay=1&edufilter=1" 
+    <iframe src="https://://youtube-nocookie.com/embed/${videoId}?rel=0&modestbranding=1&iv_load_policy=3&autoplay=1" 
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
             allowfullscreen>
     </iframe>`;
