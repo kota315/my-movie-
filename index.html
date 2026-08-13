@@ -12,6 +12,7 @@
             text-align: center;
             padding: 60px 15px;
         }
+        /* バレないように地味な青色デザインをキープ */
         h1 {
             color: #2b579a;
             font-size: 24px;
@@ -66,11 +67,11 @@
         <p id="error"></p>
     </div>
 
-    <!-- ログイン後のサイト -->
+    <!-- ログイン後のサイト（見た目は地味なままです） -->
     <div id="site">
         <h1>🔎 Webテキスト検索ポータル</h1>
-        <input type="text" id="search" placeholder="キーワードを入力" onkeydown="if(event.key === 'Enter') searchWeb()">
-        <button onclick="searchWeb()">検索</button>
+        <input type="text" id="search" placeholder="キーワードを入力" onkeydown="if(event.key === 'Enter') searchVideo()">
+        <button onclick="searchVideo()">検索</button>
     </div>
 
     <script>
@@ -90,7 +91,7 @@
             }
         }
 
-        function searchWeb() {
+        function searchVideo() {
             const keyword = document.getElementById("search").value.trim();
 
             if (!keyword) {
@@ -98,13 +99,11 @@
                 return;
             }
 
-            // 安全に新しいタブで開く仕組み（エラー対策）
-            const url = "https://www.google.com/search?q=" + encodeURIComponent(keyword) + "&udm=14";
+            // 「udm=7」を使うことで、Googleの動画検索結果（主にYouTube動画）を
+            // 新しいタブでエラーなく、安全にこっそり開きます。
+            const url = "https://www.google.com/search?q=" + encodeURIComponent(keyword) + "&udm=7";
             window.open(url, '_blank');
         }
     </script>
 </body>
 </html>
-
-
-
