@@ -1,88 +1,117 @@
-using System;
-using System.IO;
-using System.Reflection;
-using System.Threading;
-using System.Threading.Tasks;
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>シンプルチャット</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Helvetica Neue', Arial, sans-serif; }
+        body { background-color: #7494c0; display: flex; flex-direction: column; height: 100vh; }
+        
+        /* ヘッダー */
+        header { background-color: #1e2a38; color: white; text-align: center; padding: 15px; font-weight: bold; font-size: 1.1rem; }
+        
+        /* チャット表示エリア */
+        #chat-area { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 15px; }
+        
+        /* メッセージの吹き出し共通 */
+        .message-row { display: flex; flex-direction: column; max-width: 75%; width: max-content; }
+        .sender { font-size: 0.75rem; color: #e0e0e0; margin-bottom: 3px; font-weight: bold; }
+        .bubble { padding: 10px 14px; border-radius: 15px; font-size: 0.95rem; line-height: 1.4; word-break: break-all; }
+        
+        /* 自分（右側） */
+        .my-msg { align-self: flex-end; }
+        .my-msg .bubble { background-color: #7cdb7c; color: #111; border-top-right-radius: 2px; }
+        .my-msg .sender { align-self: flex-end; color: #d0f0d0; }
+        
+        /* 相手（左側） */
+        .other-msg { align-self: flex-start; }
+        .other-msg .bubble { background-color: white; color: #111; border-top-left-radius: 2px; }
+        
+        /* 入力エリア */
+        footer { background-color: #f5f5f5; padding: 10px; display: flex; gap: 10px; align-items: center; border-top: 1px solid #ddd; }
+        #name-input { width: 80px; padding: 10px; border: 1px solid #ccc; border-radius: 5px; font-size: 0.9rem; }
+        #message-input { flex: 1; padding: 10px; border: 1px solid #ccc; border-radius: 5px; font-size: 0.9rem; outline: none; }
+        #send-btn { background-color: #25d366; color: white; border: none; padding: 10px 18px; border-radius: 5px; font-size: 0.9rem; cursor: pointer; font-weight: bold; }
+        #send-btn:hover { background-color: #20ba59; }
+    </style>
+</head>
+<body>
 
-using Google.Apis.Auth.OAuth2;
-using Google.Apis.Services;
-using Google.Apis.Upload;
-using Google.Apis.Util.Store;
-using Google.Apis.YouTube.v3;
-using Google.Apis.YouTube.v3.Data;
+    <header>リアルタイム・チャットルーム</header>
 
-namespace Google.Apis.YouTube.Samples
-{
-  /// <summary>
-  /// YouTube Data API v3 sample: create a playlist.
-  /// Relies on the Google APIs Client Library for .NET, v1.7.0 or higher.
-  /// See https://developers.google.com/api-client-library/dotnet/get_started
-  /// </summary>
-  internal class PlaylistUpdates
-  {
-    [STAThread]
-    static void Main(string[] args)
-    {
-      Console.WriteLine("YouTube Data API: Playlist Updates");
-      Console.WriteLine("==================================");
+    <div id="chat-area">
+        <!-- ここにメッセージが追加されます -->
+    </div>
 
-      try
-      {
-        new PlaylistUpdates().Run().Wait();
-      }
-      catch (AggregateException ex)
-      {
-        foreach (var e in ex.InnerExceptions)
-        {
-          Console.WriteLine("Error: " + e.Message);
+    <footer>
+        <input type="text" id="name-input" placeholder="名前" value="ユーザー1">
+        <input type="text" id="message-input" placeholder="メッセージを入力..." autocomplete="off">
+        <button id="send-btn">送信</button>
+    </footer>
+
+    <script>
+        // ブラウザ間でリアルタイム通信を行うための仕組み（BroadcastChannel）
+        const channel = new BroadcastChannel('chat_channel');
+        
+        const chatArea = document.getElementById('chat-area');
+        const nameInput = document.getElementById('name-input');
+        const messageInput = document.getElementById('message-input');
+        const sendBtn = document.getElementById('send-btn');
+
+        // ランダムな初期ユーザー名を設定
+        nameInput.value = 'ユーザー' + Math.floor(Math.random() * 100);
+
+        // 画面にメッセージを表示する関数
+        function displayMessage(name, text, isMe) {
+            const messageRow = document.createElement('div');
+            messageRow.classList.add('message-row', isMe ? 'my-msg' : 'other-msg');
+
+            const sender = document.createElement('div');
+            sender.classList.add('sender');
+            sender.textContent = name;
+
+            const bubble = document.createElement('div');
+            bubble.classList.add('bubble');
+            bubble.textContent = text;
+
+            messageRow.appendChild(sender);
+            messageRow.appendChild(bubble);
+            chatArea.appendChild(messageRow);
+
+            // 常に最新のメッセージが見えるようにスクロール
+            chatArea.scrollTop = chatArea.scrollHeight;
         }
-      }
 
-      Console.WriteLine("Press any key to continue...");
-      Console.ReadKey();
-    }
+        // 送信ボタンを押したときの処理
+        function sendMessage() {
+            const name = nameInput.value.trim() || '名無し';
+            const text = messageInput.value.trim();
 
-    private async Task Run()
-    {
-      UserCredential credential;
-      using (var stream = new FileStream("client_secrets.json", FileMode.Open, FileAccess.Read))
-      {
-        credential = await GoogleWebAuthorizationBroker.AuthorizeAsync(
-            GoogleClientSecrets.Load(stream).Secrets,
-            // This OAuth 2.0 access scope allows for full read/write access to the
-            // authenticated user's account.
-            new[] { YouTubeService.Scope.Youtube },
-            "user",
-            CancellationToken.None,
-            new FileDataStore(this.GetType().ToString())
-        );
-      }
+            if (text === '') return; // 空っぽなら送信しない
 
-      var youtubeService = new YouTubeService(new BaseClientService.Initializer()
-      {
-        HttpClientInitializer = credential,
-        ApplicationName = this.GetType().ToString()
-      });
+            // 自分の画面に表示
+            displayMessage(name, text, true);
 
-      // Create a new, private playlist in the authorized user's channel.
-      var newPlaylist = new Playlist();
-      newPlaylist.Snippet = new PlaylistSnippet();
-      newPlaylist.Snippet.Title = "Test Playlist";
-      newPlaylist.Snippet.Description = "A playlist created with the YouTube API v3";
-      newPlaylist.Status = new PlaylistStatus();
-      newPlaylist.Status.PrivacyStatus = "public";
-      newPlaylist = await youtubeService.Playlists.Insert(newPlaylist, "snippet,status").ExecuteAsync();
+            // 他のタブ/ウィンドウにデータを送信
+            channel.postMessage({ name: name, text: text });
 
-      // Add a video to the newly created playlist.
-      var newPlaylistItem = new PlaylistItem();
-      newPlaylistItem.Snippet = new PlaylistItemSnippet();
-      newPlaylistItem.Snippet.PlaylistId = newPlaylist.Id;
-      newPlaylistItem.Snippet.ResourceId = new ResourceId();
-      newPlaylistItem.Snippet.ResourceId.Kind = "youtube#video";
-      newPlaylistItem.Snippet.ResourceId.VideoId = "GNRMeaz6QRI";
-      newPlaylistItem = await youtubeService.PlaylistItems.Insert(newPlaylistItem, "snippet").ExecuteAsync();
+            // 入力欄をクリアしてフォーカスを戻す
+            messageInput.value = '';
+            messageInput.focus();
+        }
 
-      Console.WriteLine("Playlist item id {0} was added to playlist id {1}.", newPlaylistItem.Id, newPlaylist.Id);
-    }
-  }
-}
+        // クリックやエンターキーで送信
+        sendBtn.addEventListener('click', sendMessage);
+        messageInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendMessage();
+        });
+
+        // 他のタブからメッセージを受信したときの処理
+        channel.onmessage = (event) => {
+            const { name, text } = event.data;
+            displayMessage(name, text, false);
+        };
+    </script>
+</body>
+</html>
